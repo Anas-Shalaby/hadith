@@ -20,16 +20,26 @@ function HadithDetailsModal({
     if (modalRef.current) {
       try {
         const canvas = await html2canvas(modalRef.current, {
-          scale: 2,
-          useCORS: true
+          scale: 3, // Higher resolution
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          imageTimeout: 0,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: -window.scrollY,
+          windowWidth: modalRef.current.scrollWidth,
+          windowHeight: modalRef.current.scrollHeight
         });
+        
         const link = document.createElement('a');
         link.download = `hadith_details_${Date.now()}.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.href = canvas.toDataURL('image/png', 1.0); // Full quality
         link.click();
-        toast.success('تم حفظ لقطة الشاشة' );
+        toast.success('تم حفظ لقطة الشاشة');
       } catch (error) {
-        toast.error('فشل أخذ لقطة الشاشة' );
+        console.error('Screenshot error:', error);
+        toast.error('فشل أخذ لقطة الشاشة');
       }
     }
   };
@@ -145,14 +155,27 @@ function HadithCard({ hadith, language }) {
   const takeScreenshot = async () => {
     try {
       const element = document.getElementById(`hadith-${hadith.id}`);
-      const canvas = await html2canvas(element);
+      const canvas = await html2canvas(element, {
+        scale: 3, // Increased scale for higher resolution
+        useCORS: true, // Handle cross-origin images
+        allowTaint: true, // Allow drawing images from different origins
+        logging: false, // Disable logging
+        imageTimeout: 0, // Prevent timeout issues
+        backgroundColor: '#ffffff', // Ensure white background
+        scrollX: 0,
+        scrollY: -window.scrollY, // Prevent scrolling issues
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      });
+      
       const link = document.createElement("a");
       link.download = `hadith-${hadith.id}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = canvas.toDataURL("image/png", 1.0); // Full quality
       link.click();
-      toast.success( 'تم حفظ لقطة الشاشة' );
+      toast.success('تم حفظ لقطة الشاشة');
     } catch (err) {
-      toast.error( 'فشل أخذ لقطة الشاشة');
+      console.error('Screenshot error:', err);
+      toast.error('فشل أخذ لقطة الشاشة');
     }
   };
 

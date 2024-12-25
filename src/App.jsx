@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Toaster } from "react-hot-toast";
-import {  Bars3Icon as MenuIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon as MenuIcon } from "@heroicons/react/24/outline";
+import { Route, Switch } from "react-router-dom";
 
 import Sidebar from "./components/Sidebar";
 import HadithList from "./components/HadithList";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { Route } from "react-router-dom";
 import HadithCard from "./components/HadithCard";
 
 const queryClient = new QueryClient({
@@ -20,6 +20,20 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Wrapper component to handle route parameters
+function HadithListWrapper({ match }) {
+  const [language, setLanguage] = useState("ar");
+  const { categoryId, page } = match.params;
+  
+  return (
+    <HadithList 
+      categoryId={Number(categoryId)} 
+      language={language} 
+      initialPage={Number(page) || 1}
+    />
+  );
+}
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -92,12 +106,30 @@ function App() {
                       : 'Browse authentic hadiths with explanations'}
                   </p>
                 </header>
-                {<HadithList 
-                  categoryId={selectedCategory} 
-                  language={language} 
-                  className="px-2 sm:px-0"
-                />
-                }
+                
+                <Switch>
+                  <Route 
+                    exact 
+                    path="/" 
+                    render={() => (
+                      <HadithList 
+                        categoryId={selectedCategory} 
+                        language={language} 
+                        className="px-2 sm:px-0"
+                      />
+                    )} 
+                  />
+                  <Route 
+                    exact 
+                    path="/category/:categoryId" 
+                    component={HadithListWrapper} 
+                  />
+                  <Route 
+                    exact 
+                    path="/category/:categoryId/page/:page" 
+                    component={HadithListWrapper} 
+                  />
+                </Switch>
               </div>
             </main>
           </div>

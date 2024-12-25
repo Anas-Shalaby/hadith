@@ -8,10 +8,9 @@ const API_BASE_URL = "https://hadeethenc.com/api/v1";
  * @param {string} lang - Language code (en, ar, etc.)
  * @returns {Promise<Array>} List of hadith categories
  */
-
 export const fetchHadithBooks = async (lang = "en") => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/categories/roots/`, {
+    const response = await axios.get(`${API_BASE_URL}/categories/list/`, {
       params: { language: lang },
     });
     return response.data;
@@ -19,6 +18,7 @@ export const fetchHadithBooks = async (lang = "en") => {
     throw formatApiError(error);
   }
 };
+
 /**
  * Fetches hadiths by category
  * @param {number} categoryId - Category/Book ID
@@ -36,27 +36,21 @@ export const fetchHadithsByBook = async (categoryId, lang = "ar", page = 1) => {
         per_page: 20,
       },
     });
-    return response.data;
-  } catch (error) {
-    throw formatApiError(error);
-  }
-};
 
-/**
- * Fetches detailed information for a specific hadith
- * @param {number} hadithId - Hadith ID
- * @param {string} lang - Language code
- * @returns {Promise<Object>} Hadith details including explanation
- */
-export const fetchHadithDetails = async (hadithId, lang = "ar") => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/hadeeths/one/`, {
-      params: {
-        language: lang,
-        id: hadithId,
-      },
-    });
-    return response.data;
+    // Manually calculate total pages if not provided
+    const totalHadiths = response.data.pagination?.total || 711; // Use the known total if API doesn't provide
+    const perPage = 20;
+    const totalPages = Math.ceil(totalHadiths / perPage);
+
+    return {
+      ...response.data,
+      pagination: {
+        ...response.data.pagination,
+        current_page: page,
+        total_pages: totalPages,
+        total: totalHadiths,
+      }
+    };
   } catch (error) {
     throw formatApiError(error);
   }
