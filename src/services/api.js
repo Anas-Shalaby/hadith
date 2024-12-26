@@ -1,5 +1,6 @@
 import axios from "axios";
 import { formatApiError } from "../utils/errorHandling";
+import { sahabaData } from '../data/sahaba';
 
 const API_BASE_URL = "https://hadeethenc.com/api/v1";
 
@@ -53,5 +54,16 @@ export const fetchHadithsByBook = async (categoryId, lang = "ar", page = 1) => {
     };
   } catch (error) {
     throw formatApiError(error);
+  }
+};
+
+export const fetchSahabaList = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/sahaba/list/`);
+    return response.data;
+  } catch (error) {
+    console.warn('Falling back to local data:', error.message);
+    // Fallback to local data if API fails
+    return sahabaData;
   }
 };

@@ -1,24 +1,41 @@
+// src/components/HadithList.jsx
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useInfiniteQuery } from "react-query";
 import { fetchHadithsByBook } from "../services/api";
 import HadithCard from "./HadithCard";
 import LoadingSpinner from "./LoadingSpinner";
-import { useState, useMemo } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
 function HadithList({ 
-  categoryId, 
+  categories = [], 
   language = "ar", 
   initialPage = 1, 
   className = "" 
 }) {
   const history = useHistory();
+  const { categoryId } = useParams();
   const [manualPage, setManualPage] = useState(initialPage);
+  
+  // Determine initial category
+  const initialSelectedCategory = useMemo(() => {
+   
 
+    if (categoryId) {
+      const urlCategory = categories.find(cat => cat.id === Number(categoryId));
+      if (urlCategory) return urlCategory;
+    }
+
+    return categories[0] || null;
+  }, [categories, categoryId]);
+
+  const [selectedCategory, setSelectedCategory] = useState(initialSelectedCategory);
+  // Fetch hadiths query
   const {
     data,
     isLoading,
     error,
+    refetch,
     fetchNextPage,
     fetchPreviousPage,
     isFetchingNextPage,
@@ -26,6 +43,9 @@ function HadithList({
   } = useInfiniteQuery(
     ["hadiths", categoryId, language, initialPage],
     async ({ pageParam = initialPage }) => {
+      if (!selectedCategory?.id) {
+        throw new Error("No category selected");
+      }
       const response = await fetchHadithsByBook(categoryId, language, pageParam);
       return {
         ...response,
@@ -33,7 +53,7 @@ function HadithList({
       };
     },
     {
-      enabled: !!categoryId,
+      enabled: !!selectedCategory?.id,
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
       getNextPageParam: (lastPage, allPages) => {
         const currentPage = lastPage.pageParam;
@@ -52,11 +72,20 @@ function HadithList({
     }
   );
 
-  // Manually calculate pagination details
+  // Category change handler
+  const handleCategoryChange = useCallback((newCategory) => {
+    if (newCategory) {
+      setSelectedCategory(newCategory);
+      setManualPage(1);
+      history.push(`/hadiths/${newCategory.id}`);
+    }
+  }, [history]);
+
+  // Pagination details calculation
   const paginationDetails = useMemo(() => {
     if (!data?.pages?.length) return {
       currentPage: initialPage,
-      totalPages: Math.ceil(711 / 20), // Hardcoded total hadiths / per page
+      totalPages: Math.ceil(711 / 20),
       hasNextPage: initialPage < Math.ceil(711 / 20),
       hasPreviousPage: initialPage > 1
     };
@@ -72,14 +101,7 @@ function HadithList({
     };
   }, [data, initialPage]);
 
-  if (error) {
-    return (
-      <div className="text-red-500 p-4 text-center" dir="rtl">
-        خطأ في تحميل الأحاديث: {error.message}
-      </div>
-    );
-  }
-
+  // Loading and error states
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -88,37 +110,38 @@ function HadithList({
     );
   }
 
-  if (!data?.pages?.[0]?.data?.length) {
+  if (error) {
+    return (  
+      <div className="text-red-500 p-4 text-center" dir="rtl">
+        خطأ في تحميل الأحاديث: {error.message}
+      </div>
+    );
+  }
+
+  if (!selectedCategory) {
     return (
       <div className="text-center text-gray-500 p-4" dir="rtl">
-        لم يتم العثور على أحاديث في هذه الفئة
+        لم يتم تحديد كتاب
       </div>
     );
   }
 
   // Flatten all hadith pages
-  const allHadiths = data.pages.flatMap(page => page.data);
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= paginationDetails.totalPages) {
-      setManualPage(newPage);
-      // Navigate to the new page route
-      history.push(`/category/${categoryId}/page/${newPage}`);
-    }
-  };
+  const allHadiths = data?.pages?.flatMap(page => page.data) || [];
 
   return (
     <div className={`container mx-auto px-4 py-6 ${className}`} dir="rtl">
-      {/* Hadiths Grid */}
+     
+
+      {/* Hadiths Grid with Improved Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {allHadiths.map((hadith) => (
           <HadithCard key={hadith.id} hadith={hadith} />
         ))}
       </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination Controls with Modern Design */}
       <div className="flex flex-col items-center space-y-4">
-        {/* Pagination Container */}
         <div className="flex items-center space-x-4 space-x-reverse bg-white shadow-md rounded-lg p-4">
           {/* Next Page Button (visually left, logically right) */}
           <button
