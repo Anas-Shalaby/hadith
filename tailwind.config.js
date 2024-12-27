@@ -6,6 +6,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class', // Enable dark mode with class
   theme: {
     extend: {
       colors: {
@@ -32,12 +33,25 @@ export default {
           700: '#0369a1',
           800: '#075985',
           900: '#0c4a6e'
+        },
+        // Dark mode specific colors
+        dark: {
+          background: '#121212',
+          text: '#ffffff',
+          muted: '#888888'
         }
+      },
+      // Ensure consistent layout
+      maxWidth: {
+        'screen-xl': '1280px'
       }
     }
   },
   variants: {
-    extend: {},
+    extend: {
+      backgroundColor: ['dark'],
+      textColor: ['dark']
+    },
   },
   plugins: [tailwindRTL],
 }

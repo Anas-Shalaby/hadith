@@ -12,6 +12,7 @@ import SahabiCard from './components/SahabiCard';
 import SahabaPDFViewer from './components/SahabaPDFViewer';
 import LoadingSpinner from './components/LoadingSpinner';
 import HadithListWrapper from './components/HadithListWrapper';
+
 // Hooks and Utilities
 import { useSahabaData } from './hooks/useSahabaData';
 import { useHadithCategories } from './hooks/useHadithCategories';
@@ -24,7 +25,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
 
 function App() {
   const [language, setLanguage] = useState("ar");
@@ -64,14 +64,14 @@ function App() {
               isSidebarOpen={isSidebarOpen}
             />
 
-            {/* Content Wrapper */}
-            <main className="flex-1 p-6 transition-all duration-300">
+            {/* Content Wrapper with Top Padding */}
+            <main className="flex-1 pt-16 overflow-y-auto">
               <Switch>
                 <Route exact path="/">
                   {sahabaLoading ? (
                     <LoadingSpinner />
                   ) : (
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-2 gap-6 p-6">
                       <SahabaList 
                         sahaba={sahaba}
                         onSelectSahabi={setSelectedSahabi}
@@ -86,11 +86,11 @@ function App() {
                 </Route>
             
                 <Route exact path="/hadiths">
-            <HadithListWrapper />
-          </Route>
-          <Route path="/hadiths/:categoryId">
-            <HadithListWrapper />
-          </Route>
+                  <HadithListWrapper />
+                </Route>
+                <Route path="/hadiths/:categoryId">
+                  <HadithListWrapper />
+                </Route>
                 
                 <Route path="/sahaba/:sahabiId/pdf">
                   <SahabaPDFViewer />
