@@ -60,6 +60,9 @@ const Navbar = ({ language, onToggleSidebar }) => {
             <span className="text-xl font-bold text-gray-800 dark:text-white">
               {language === 'ar' ? 'مجموعة الأحاديث' : 'Hadith Collection'}
             </span>
+            <span className="text-xl font-bold text-gray-800 dark:text-white">
+              {language === 'ar' ? 'AA' : 'Hadith Collection'}
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
