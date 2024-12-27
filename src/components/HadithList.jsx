@@ -1,4 +1,3 @@
-// src/components/HadithList.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useInfiniteQuery } from "react-query";
 import { fetchHadithsByBook } from "../services/api";
@@ -10,17 +9,16 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 function HadithList({ 
   categories = [], 
   language = "ar", 
-  initialPage = 1, 
   className = "" 
 }) {
   const history = useHistory();
-  const { categoryId } = useParams();
-  const [manualPage, setManualPage] = useState(initialPage);
+  const { categoryId, page } = useParams();
   
+  // Convert page to number, default to 1 if not provided
+  const currentPage = page ? parseInt(page, 10) : 1;
+
   // Determine initial category
   const initialSelectedCategory = useMemo(() => {
-   
-
     if (categoryId) {
       const urlCategory = categories.find(cat => cat.id === Number(categoryId));
       if (urlCategory) return urlCategory;
@@ -30,7 +28,8 @@ function HadithList({
   }, [categories, categoryId]);
 
   const [selectedCategory, setSelectedCategory] = useState(initialSelectedCategory);
-  // Fetch hadiths query
+
+  // Fetch hadiths query with initial page
   const {
     data,
     isLoading,
@@ -41,8 +40,8 @@ function HadithList({
     isFetchingNextPage,
     isFetchingPreviousPage,
   } = useInfiniteQuery(
-    ["hadiths", categoryId, language, initialPage],
-    async ({ pageParam = initialPage }) => {
+    ["hadiths", categoryId, language, currentPage],
+    async ({ pageParam = currentPage }) => {
       if (!selectedCategory?.id) {
         throw new Error("No category selected");
       }
@@ -72,34 +71,38 @@ function HadithList({
     }
   );
 
-  // Category change handler
-  const handleCategoryChange = useCallback((newCategory) => {
-    if (newCategory) {
-      setSelectedCategory(newCategory);
-      setManualPage(1);
-      history.push(`/hadiths/${newCategory.id}`);
-    }
-  }, [history]);
-
   // Pagination details calculation
   const paginationDetails = useMemo(() => {
     if (!data?.pages?.length) return {
-      currentPage: initialPage,
+      currentPage,
       totalPages: Math.ceil(711 / 20),
-      hasNextPage: initialPage < Math.ceil(711 / 20),
-      hasPreviousPage: initialPage > 1
+      hasNextPage: currentPage < Math.ceil(711 / 20),
+      hasPreviousPage: currentPage > 1
     };
 
     const lastPage = data.pages[data.pages.length - 1];
     const pagination = lastPage.pagination || {};
     
     return {
-      currentPage: pagination.current_page || initialPage,
+      currentPage: pagination.current_page || currentPage,
       totalPages: pagination.total_pages || Math.ceil(711 / 20),
       hasNextPage: pagination.current_page < pagination.total_pages,
       hasPreviousPage: pagination.current_page > 1
     };
-  }, [data, initialPage]);
+  }, [data, currentPage]);
+
+  // Page navigation handlers
+  const handleNextPage = useCallback(() => {
+    const nextPage = paginationDetails.currentPage + 1;
+    history.push(`/hadiths/${categoryId}/page/${nextPage}`);
+    fetchNextPage();
+  }, [history, categoryId, paginationDetails, fetchNextPage]);
+
+  const handlePreviousPage = useCallback(() => {
+    const prevPage = paginationDetails.currentPage - 1;
+    history.push(`/hadiths/${categoryId}/page/${prevPage}`);
+    fetchPreviousPage();
+  }, [history, categoryId, paginationDetails, fetchPreviousPage]);
 
   // Loading and error states
   if (isLoading) {
@@ -131,44 +134,41 @@ function HadithList({
 
   return (
     <div className={`container mx-auto px-4 py-6 ${className}`} dir="rtl">
-     
-
       {/* Hadiths Grid with Improved Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {allHadiths.map((hadith) => (
-          <HadithCard key={hadith.id} hadith={hadith} />
+          <HadithCard 
+            key={hadith.id} 
+            hadith={hadith} 
+            language={language}
+            categoryId={categoryId}
+            page={currentPage}
+          />
         ))}
       </div>
 
       {/* Pagination Controls with Modern Design */}
       <div className="flex flex-col items-center space-y-4">
-        <div className="flex items-center space-x-4 space-x-reverse bg-white shadow-md rounded-lg p-4">
-          {/* Next Page Button (visually left, logically right) */}
+        <div className="flex items-center space-x-4 space-x-reverse bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+          {/* Previous Page Button */}
           <button
-            onClick={() => {
-              fetchNextPage();
-              history.push(`/category/${categoryId}/page/${paginationDetails.currentPage - 1}`);
-            }}
+            onClick={handlePreviousPage}
             disabled={!paginationDetails.hasPreviousPage}
-            className="text-gray-600 hover:text-blue-600 disabled:text-gray-300 transition-colors duration-200"
+            className="text-gray-600 dark:text-gray-300 hover:text-blue-600 disabled:text-gray-300 transition-colors duration-200"
           >
             <ChevronRightIcon className="h-8 w-8" />
           </button>
 
-        
           {/* Page Info */}
-          <div className="text-gray-600 text-sm">
+          <div className="text-gray-600 dark:text-gray-300 text-sm">
             الصفحة {paginationDetails.currentPage} من {paginationDetails.totalPages}
           </div>
 
-          {/* Previous Page Button (visually right, logically left) */}
+          {/* Next Page Button */}
           <button
-            onClick={() => {
-              fetchPreviousPage();
-              history.push(`/category/${categoryId}/page/${paginationDetails.currentPage + 1}`);
-            }}
+            onClick={handleNextPage}
             disabled={!paginationDetails.hasNextPage}
-            className="text-gray-600 hover:text-blue-600 disabled:text-gray-300 transition-colors duration-200"
+            className="text-gray-600 dark:text-gray-300 hover:text-blue-600 disabled:text-gray-300 transition-colors duration-200"
           >
             <ChevronLeftIcon className="h-8 w-8" />
           </button>
@@ -176,7 +176,7 @@ function HadithList({
 
         {/* Loading Indicators */}
         {(isFetchingNextPage || isFetchingPreviousPage) && (
-          <div className="text-gray-500 animate-pulse" dir="rtl">
+          <div className="text-gray-500 dark:text-gray-400 animate-pulse" dir="rtl">
             جارٍ تحميل المزيد من الأحاديث...
           </div>
         )}

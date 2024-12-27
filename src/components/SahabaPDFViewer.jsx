@@ -5,6 +5,7 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
+import toast from 'react-hot-toast';
 
 import { 
   ChevronLeftIcon, 
@@ -15,6 +16,7 @@ import {
 } from '@heroicons/react/24/solid';
 import LoadingSpinner from './LoadingSpinner';
 
+// Ensure PDF.js worker is properly configured
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 function SahabaPDFViewer() {
@@ -203,7 +205,41 @@ function SahabaPDFViewer() {
     console.error('PDF load error:', error);
     setIsDocumentLoaded(false);
   };
+  const updateAchievements = useCallback(() => {
+    if (progressPercentage >= 80) {
+      const completedSahabaIds = JSON.parse(localStorage.getItem('completed_sahaba') || '[]');
+      if (!completedSahabaIds.includes(sahabiId)) {
+        const updatedCompletedSahaba = [...completedSahabaIds, sahabiId];
+        localStorage.setItem('completed_sahaba', JSON.stringify(updatedCompletedSahaba));
+        
+        // Clear local storage for this specific Sahabi
+        localStorage.removeItem(`bookmark-${sahabiId}`);
+        localStorage.removeItem(`progress-${sahabiId}`);
+        
+        // Check if all sahaba are completed
+        const allSahabaIds = ['abu_bakr', 'umar', 'uthman', 'ali'];
+        const isJourneyComplete = allSahabaIds.every(id => 
+          updatedCompletedSahaba.includes(id)
+        );
+        
+        localStorage.setItem('sahaba_journey_complete', isJourneyComplete);
+        
+        // Optional: Show a toast or notification
+        toast.success(`تم إضافة إنجاز ${selectedSahabi.name}!`, {
+          icon: '🏆',
+          style: {
+            borderRadius: '10px',
+            background: '#333',
+            color: '#fff',
+          },
+        });
+      }
+    }
+  }, [progressPercentage, sahabiId, selectedSahabi]);
 
+  useEffect(() => {
+    updateAchievements();
+  }, [updateAchievements]);
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 pt-16">
       {/* Navigation */}
