@@ -38,7 +38,6 @@ function App() {
 
   const { sahaba, loading: sahabaLoading } = useSahabaData();
   const { categories, loading: categoriesLoading } = useHadithCategories();
-
   // Toggle dark mode
 
   const toggleSidebar = () => {
