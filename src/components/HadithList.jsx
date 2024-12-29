@@ -5,30 +5,37 @@ import HadithCard from "./HadithCard";
 import LoadingSpinner from "./LoadingSpinner";
 import { useHistory, useParams } from "react-router-dom";
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import Sidebar from './Sidebar';
 
 function HadithList({ 
   categories = [], 
-  language = "ar", 
-  className = "" 
+  className = '', 
+  onCategorySelect, 
+  language="ar",
+  hasNextPage, 
 }) {
   const history = useHistory();
   const { categoryId, page } = useParams();
-  
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Convert page to number, default to 1 if not provided
   const currentPage = page ? parseInt(page, 10) : 1;
-
   // Determine initial category
   const initialSelectedCategory = useMemo(() => {
     if (categoryId) {
       const urlCategory = categories.find(cat => cat.id === Number(categoryId));
-      if (urlCategory) return urlCategory;
+      if (urlCategory) return setSelectedCategory(urlCategory);
     }
 
     return categories[0] || null;
   }, [categories, categoryId]);
 
   const [selectedCategory, setSelectedCategory] = useState(initialSelectedCategory);
-
+  const [realSelectedCategory, setRealSelectedCategory] = useState(initialSelectedCategory);
+  useEffect(()=>{
+      const urlCategory = categories.find((cat) => cat.id == categoryId);
+      if (urlCategory) return setRealSelectedCategory(urlCategory);
+    
+  },[realSelectedCategory , categoryId, categories]);
   // Fetch hadiths query with initial page
   const {
     data,
@@ -131,11 +138,24 @@ function HadithList({
 
   // Flatten all hadith pages
   const allHadiths = data?.pages?.flatMap(page => page.data) || [];
-
   return (
+    <div className="flex flex-row-reverse ">
+      {/* Sidebar for large screens */}
+      <div className="hidden  lg:block w-[21%] bg-gray-100 dark:bg-gray-800 ">
+        <Sidebar 
+          isOpen={true} 
+          onClose={() => {}} 
+          categories={categories}
+          onLinkClick={() => {}}
+        />
+      </div>
     <div className={`container mx-auto px-4 py-6 ${className}`} dir="rtl">
-      {/* Hadiths Grid with Improved Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      {/* <Sidebar /> */}
+      <div className='flex justify-between align-center'>
+      <h1 className="text-3xl font-bold mb-8 text-center text-gray-800 dark:text-white">{realSelectedCategory?.title}</h1>
+      <span className="text-xl font-bold mb-8 text-center text-gray-800 dark:text-white"> عدد الاحاديث :{realSelectedCategory?.hadeeths_count}</span></div> 
+     
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 w-[93%] gap-6 mb-8">
         {allHadiths.map((hadith) => (
           <HadithCard 
             key={hadith.id} 
@@ -181,6 +201,7 @@ function HadithList({
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

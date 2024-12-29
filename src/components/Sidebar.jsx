@@ -37,7 +37,7 @@ const SidebarItem = ({
 const Sidebar = ({ 
   isOpen, 
   onClose, 
-  language, 
+  language="ar", 
   onLanguageChange, 
   categories = [], 
   onLinkClick 
